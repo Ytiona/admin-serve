@@ -1,11 +1,3 @@
-/*
- * @Author: your name
- * @Date: 2021-05-12 21:46:44
- * @LastEditTime: 2021-05-13 23:23:14
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: \admin-serve\routes\user.js
- */
 const express = require('express');
 const router = express.Router();
 const querySql = require('../db');
@@ -26,10 +18,11 @@ router.post('/login', async (req, res, next) => {
         JWT_CONFIG.PRIVATE_KEY,
         { expiresIn: JWT_CONFIG.EXPIRESD }
       )
+      
       res.send({
         code: 0,
-        msg: '登录成功',
-        data: token
+        msg: `欢迎回来，${userName}`,
+        result: token
       });
     } else {
       res.send({
@@ -38,6 +31,18 @@ router.post('/login', async (req, res, next) => {
       })
     }
   } catch (err) {
+    next(err);
+  }
+})
+
+router.get('/get', async (req, res, next) => {
+  try {
+    res.send({
+      code: 0,
+      msg: '获取成功',
+      result: [{ a: 1, b: 2 }, { a:3, b: 3 }]
+    })
+  } catch(err) {
     next(err);
   }
 })
