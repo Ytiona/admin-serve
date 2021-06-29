@@ -3,6 +3,9 @@ const router = express.Router();
 const querySql = require('../db');
 const jwt = require('jsonwebtoken');
 const { JWT: JWT_CONFIG } = require('../config/constants');
+const { generateTree } = require('../lib/utils');
+
+const { getMenuSql } = require('../sql/menu');
 
 router.post('/login', async (req, res, next) => {
   try {
@@ -42,6 +45,22 @@ router.get('/get', async (req, res, next) => {
       msg: '获取成功',
       result: [{ a: 1, b: 2 }, { a:3, b: 3 }]
     })
+  } catch(err) {
+    next(err);
+  }
+})
+
+router.get('/getUserMenuList', async(req, res, next) => {
+  try {
+    const menuList = await querySql(getMenuSql);
+    res.send({
+      code: 0,
+      msg: '获取成功',
+      result: {
+        menuTree: generateTree({ source: menuList }),
+        routes: menuList.filter(item => item.type == '1')
+      }
+    });
   } catch(err) {
     next(err);
   }

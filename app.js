@@ -11,6 +11,7 @@ const mloginApi = require('./config/mlogin-api');
 
 const indexRouter = require('./routes/index');
 const userRouter = require('./routes/user');
+const systemRouter = require('./routes/system');
 
 const app = express();
 app.use(cors());
@@ -29,6 +30,7 @@ app.use(expressJWT({
 
 app.use('', indexRouter);
 app.use('/user', userRouter);
+app.use('/sys', systemRouter);
 
 app.use(function(req, res, next) {
   next(createError(404));
@@ -38,7 +40,10 @@ app.use(function(req, res, next) {
 app.use(function(err, req, res, next) {
   console.log(err);
   if (err.name == 'UnauthorizedError') {
-    res.status(401).send({ code: -1, msg: 'token校验失败！' });
+    const errMsgTranslate = {
+      'jwt expired': '登录状态已过期，请重新登录'
+    }
+    res.status(401).send({ code: -1, msg: errMsgTranslate[err.message] || '无效的密令，请登录！'});
   } else {
     res.locals.message = err.message;
     res.locals.error = req.app.get('env') === 'development' ? err : {};

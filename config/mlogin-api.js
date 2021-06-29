@@ -2,5 +2,6 @@ module.exports = [
   '/',
   '/get',
   '/post',
-  '/user/login'
+  '/user/login',
+  '/sys/getMenuList'
 ]
