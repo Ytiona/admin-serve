@@ -24,20 +24,28 @@ router.get('/getMenuList', async (req, res, next) => {
 router.post('/addNode', async (req, res, next) => {
   try {
     const { 
-      type, parent_id, name, code, icon, icon_type, 
-      node_path, component_path, request_addr, 
-      order_val, remarks, enabled 
+      type, parent_id, parent_name, name, code, 
+      icon, icon_type, node_path, component_path, 
+      request_addr, order_val, remarks, enabled 
     } = req.body;
+    const samePathQuery = await querySql('SELECT node_path FROM menu_admin WHERE node_path = node_path');
+    if(samePathQuery.length > 0) {
+      return res.send({
+        code: -1,
+        msg: '路径已存在！'
+      })
+    }
     await querySql(
       `
         INSERT INTO menu_admin 
-        (type, parent_id, name, code, icon, icon_type, 
-        node_path, component_path, request_addr, 
-        order_val, remarks, enabled) 
+        (type, parent_id, parent_name, name, code, 
+        icon, icon_type, node_path, component_path, 
+        request_addr, order_val, remarks, enabled) 
         VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, 
       [
-        type, parent_id, name, code, icon, icon_type, 
+        type, parent_id, parent_name, 
+        name, code,icon, icon_type,
         node_path, component_path, request_addr, 
         order_val, remarks, enabled 
       ]
