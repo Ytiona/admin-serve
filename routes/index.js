@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
+
+
 router.get('/', function(req, res, next) {
   res.send({
     IsSuccess: true,
@@ -20,3 +22,10 @@ router.post('/post', function(req, res, next) {
 
 
 module.exports = router;
+
+
+/**
+ * @apiDefine Common
+ * @apiSuccess {Number} code 请求结果code码
+ * @apiSuccess {String} msg 请求结果msg
+ */

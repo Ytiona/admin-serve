@@ -5,8 +5,17 @@ const jwt = require('jsonwebtoken');
 const { JWT: JWT_CONFIG } = require('../config/constants');
 const { generateTree } = require('../lib/utils');
 
-const { getMenuSql } = require('../sql/menu');
+const { menuFields } = require('../sql/menu');
 
+  /**
+  * @api {post} /use/login 登录
+  * @apiName userLogin
+  * @apiGroup user
+  * @apiParam {String} userName 用户名
+  * @apiParam {String} password 用户名
+  * @apiSuccess {String} result token
+  * @apiUse Common
+  */
 router.post('/login', async (req, res, next) => {
   try {
     const { userName, password } = req.body;
@@ -38,21 +47,23 @@ router.post('/login', async (req, res, next) => {
   }
 })
 
-router.get('/get', async (req, res, next) => {
-  try {
-    res.send({
-      code: 0,
-      msg: '获取成功',
-      result: [{ a: 1, b: 2 }, { a:3, b: 3 }]
-    })
-  } catch(err) {
-    next(err);
-  }
-})
-
+  /**
+  * @api {post} /use/getUserMenuList 获取用户菜单
+  * @apiName getUserMenuList
+  * @apiGroup user
+  * @apiSuccess {Object} result
+  * @apiSuccess {Array} result.menuTree 树形菜单
+  * @apiSuccess {Array} result.routes 菜单列表
+  * @apiUse Common
+  */
 router.get('/getUserMenuList', async(req, res, next) => {
   try {
-    const menuList = await querySql(getMenuSql);
+    const menuList = await querySql(`
+      SELECT ${menuFields} 
+      FROM menu_admin 
+      WHERE is_del <> 1 AND enabled <> 0 
+      ORDER BY order_val ASC
+    `);
     res.send({
       code: 0,
       msg: '获取成功',
