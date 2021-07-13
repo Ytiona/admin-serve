@@ -1,4 +1,5 @@
 const express = require('express');
+const { escape } = require('mysql');
 const router = express.Router();
 const querySql = require('../db');
 const jwt = require('jsonwebtoken');
@@ -7,21 +8,21 @@ const { generateTree } = require('../lib/utils');
 
 const { menuFields } = require('../sql/menu');
 
-  /**
-  * @api {post} /use/login 登录
-  * @apiName userLogin
-  * @apiGroup user
-  * @apiParam {String} userName 用户名
-  * @apiParam {String} password 用户名
-  * @apiSuccess {String} result token
-  * @apiUse Common
-  */
+/**
+* @api {post} /use/login 登录
+* @apiName userLogin
+* @apiGroup user
+* @apiParam {String} userName 用户名
+* @apiParam {String} password 用户名
+* @apiSuccess {String} result token
+* @apiUse Common
+*/
 router.post('/login', async (req, res, next) => {
   try {
     const { userName, password } = req.body;
-    const queryRes = await querySql('SELECT * FROM user WHERE user_name = ? AND password = ?', [userName, password]);
+    const queryRes = await querySql('SELECT * FROM sys_user WHERE user_name = ? AND password = ?', [userName, password]);
     if (queryRes.length > 0) {
-      const { user_name, id } = queryRes[0];
+      const { user_name, id, avatar } = queryRes[0];
       const token = jwt.sign(
         {
           id: id,
@@ -30,11 +31,14 @@ router.post('/login', async (req, res, next) => {
         JWT_CONFIG.PRIVATE_KEY,
         { expiresIn: JWT_CONFIG.EXPIRESD }
       )
-      
       res.send({
         code: 0,
         msg: `欢迎回来，${userName}`,
-        result: token
+        result: token,
+        userInfo: {
+          userName,
+          avatar
+        }
       });
     } else {
       res.send({
@@ -47,23 +51,28 @@ router.post('/login', async (req, res, next) => {
   }
 })
 
-  /**
-  * @api {post} /use/getUserMenuList 获取用户菜单
-  * @apiName getUserMenuList
-  * @apiGroup user
-  * @apiSuccess {Object} result
-  * @apiSuccess {Array} result.menuTree 树形菜单
-  * @apiSuccess {Array} result.routes 菜单列表
-  * @apiUse Common
-  */
-router.get('/getUserMenuList', async(req, res, next) => {
+/**
+* @api {post} /use/getUserMenuList 获取用户菜单
+* @apiName getUserMenuList
+* @apiGroup user
+* @apiSuccess {Object} result
+* @apiSuccess {Array} result.menuTree 树形菜单
+* @apiSuccess {Array} result.routes 菜单列表
+* @apiUse Common
+*/
+router.get('/getUserMenuList', async (req, res, next) => {
   try {
+    const { userName } = req.user;
+    const userInfo = await querySql(`SELECT role FROM sys_user WHERE user_name = ?`, [userName]);
+    const userRole = userInfo[0].role;
     const menuList = await querySql(`
       SELECT ${menuFields} 
-      FROM menu_admin 
-      WHERE is_del <> 1 AND enabled <> 0 
+      FROM sys_menu sm
+      INNER JOIN sys_role_menu srm
+      ON srm.role_code = ? AND sm.id = srm.menu_id
+      WHERE is_del <> 1 AND enabled <> 0
       ORDER BY order_val ASC
-    `);
+    `, [userRole]);
     res.send({
       code: 0,
       msg: '获取成功',
@@ -72,7 +81,7 @@ router.get('/getUserMenuList', async(req, res, next) => {
         routes: menuList.filter(item => item.type == '1')
       }
     });
-  } catch(err) {
+  } catch (err) {
     next(err);
   }
 })
