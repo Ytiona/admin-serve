@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "serve": "nodemon ./bin/www --env development"
+    "serve": "nodemon ./bin/www --env development",
+    "build-api": "node ./automation/build-api"
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",

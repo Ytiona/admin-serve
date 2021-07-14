@@ -2,11 +2,13 @@ const express = require('express');
 const router = express.Router();
 const { escape } = require('mysql');
 
+const apiData = require('../apidoc/api_data.json');
+
 
 router.get('/', function(req, res, next) {
   res.send({
     IsSuccess: true,
-    Data: `[{\"a\":1},{\"a\":2}]`
+    Data: apiData
   })
 });
 

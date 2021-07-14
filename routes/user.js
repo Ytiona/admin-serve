@@ -10,7 +10,7 @@ const { menuFields } = require('../sql/menu');
 
 /**
 * @api {post} /use/login 登录
-* @apiName userLogin
+* @apiName 用户登录
 * @apiGroup user
 * @apiParam {String} userName 用户名
 * @apiParam {String} password 用户名
@@ -22,10 +22,10 @@ router.post('/login', async (req, res, next) => {
     const { userName, password } = req.body;
     const queryRes = await querySql('SELECT * FROM sys_user WHERE user_name = ? AND password = ?', [userName, password]);
     if (queryRes.length > 0) {
-      const { user_name, id, avatar } = queryRes[0];
+      const { user_name, avatar, role } = queryRes[0];
       const token = jwt.sign(
         {
-          id: id,
+          role,
           userName: user_name
         },
         JWT_CONFIG.PRIVATE_KEY,
@@ -52,8 +52,8 @@ router.post('/login', async (req, res, next) => {
 })
 
 /**
-* @api {post} /use/getUserMenuList 获取用户菜单
-* @apiName getUserMenuList
+* @api {post} /use/getUserMenuList 获取用户菜单，通过角色菜单授权控制
+* @apiName 获取用户菜单
 * @apiGroup user
 * @apiSuccess {Object} result
 * @apiSuccess {Array} result.menuTree 树形菜单
@@ -62,9 +62,7 @@ router.post('/login', async (req, res, next) => {
 */
 router.get('/getUserMenuList', async (req, res, next) => {
   try {
-    const { userName } = req.user;
-    const userInfo = await querySql(`SELECT role FROM sys_user WHERE user_name = ?`, [userName]);
-    const userRole = userInfo[0].role;
+    const { role } = req.user;
     const menuList = await querySql(`
       SELECT ${menuFields} 
       FROM sys_menu sm
@@ -72,7 +70,7 @@ router.get('/getUserMenuList', async (req, res, next) => {
       ON srm.role_code = ? AND sm.id = srm.menu_id
       WHERE is_del <> 1 AND enabled <> 0
       ORDER BY order_val ASC
-    `, [userRole]);
+    `, [role]);
     res.send({
       code: 0,
       msg: '获取成功',

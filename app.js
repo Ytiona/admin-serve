@@ -5,9 +5,11 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const cors = require('cors');
 const expressJWT = require('express-jwt');
+const apiAuth = require('./lib/api-auth');
 
 const { JWT: JWT_CONFIG } = require('./config/constants'); 
-const mloginApi = require('./config/mlogin-api');
+const jwtUnlessApi = require('./config/jwt-unless-api');
+const apiAuthUnlessApi = require('./config/api-auth-unless-api');
 
 const indexRouter = require('./routes/index');
 const userRouter = require('./routes/user');
@@ -24,9 +26,12 @@ app.use(expressJWT({
   secret: JWT_CONFIG.PRIVATE_KEY,
   algorithms: ['HS256']
 }).unless({
-  path: mloginApi
+  path: jwtUnlessApi
 }))
 
+app.use(apiAuth({
+  unless: [apiAuthUnlessApi]
+}))
 
 app.use('', indexRouter);
 app.use('/user', userRouter);

@@ -7,8 +7,8 @@ const { getMenuSql } = require('../sql/menu');
 const { generateTree, handlePageSql } = require('../lib/utils');
 
 /**
- * @api {get} /sys/getMenuList 获取所有菜单列表
- * @apiName getMenuList
+ * @api {get} /sys/getMenuList 获取所有节点(菜单)
+ * @apiName 获取所有节点
  * @apiGroup system
  * @apiSuccess {Array} result 菜单列表
  * @apiUse Common
@@ -31,8 +31,8 @@ router.get('/getMenuList', async (req, res, next) => {
 
 
 /**
-* @api {post} /sys/addNode 添加节点
-* @apiName addNode
+* @api {post} /sys/addNode 添加节点，栏目或顶层下可以添加任一类型，菜单下不能有栏目，权限项下不能有菜单和栏目
+* @apiName 添加节点
 * @apiGroup system
 * @apiParam {String="0","1","2"} type 节点类型
 * @apiParam {Number} [parent_id] 父节点id
@@ -96,8 +96,8 @@ router.post('/addNode', async (req, res, next) => {
 })
 
 /**
-* @api {post} /sys/updateNode 添加节点
-* @apiName updateNode
+* @api {post} /sys/updateNode 更新节点，不能更新类型、父级
+* @apiName 更新节点
 * @apiGroup system
 * @apiParam {Number} id 节点id
 * @apiParam {String="0","1","2"} type 节点类型
@@ -145,8 +145,8 @@ router.post('/updateNode', async (req, res, next) => {
 })
 
 /**
-* @api {post} /sys/batchDeleteNode 批量删除节点
-* @apiName batchDeleteNode
+* @api {post} /sys/batchDeleteNode 删除节点，可批量
+* @apiName 删除节点
 * @apiGroup system
 * @apiParam {Array} nodeIds 节点id数组
 * @apiUse Common
@@ -176,8 +176,8 @@ router.post('/batchDeleteNode', async (req, res, next) => {
 })
 
 /**
-* @api {get} /sys/getRoleList 获取角色列表
-* @apiName getRoleList
+* @api {get} /sys/getRoleList 获取角色列表，仅限获取低于自身角色等级角色
+* @apiName 获取角色列表
 * @apiGroup system
 * @apiSuccess {Array} result 角色列表
 * @apiUse Common
@@ -212,8 +212,8 @@ router.get('/getRoleList', async (req, res, next) => {
 })
 
 /**
-* @api {post} /sys/addRole 添加角色
-* @apiName addRole
+* @api {post} /sys/addRole 添加角色，角色等级仅限设置为低于自身角色等级
+* @apiName 添加角色
 * @apiParam {String} name 角色名称
 * @apiParam {String} code 角色编码（用于，鉴权需唯一）
 * @apiParam {Number} level 角色级别
@@ -243,8 +243,8 @@ router.post('/addRole', async (req, res, next) => {
 })
 
 /**
-* @api {post} /sys/batchDeleteRole 批量删除角色
-* @apiName batchDeleteRole
+* @api {post} /sys/batchDeleteRole 删除角色，可批量
+* @apiName 删除角色
 * @apiParam {Array} roleIds 角色id数组
 * @apiGroup system
 * @apiUse Common
@@ -263,8 +263,8 @@ router.post('/batchDeleteRole', async (req, res, next) => {
 })
 
 /**
-* @api {post} /sys/updateRole 编辑角色
-* @apiName updateRole
+* @api {post} /sys/updateRole 更新角色，角色等级仅限设置为低于自身角色等级
+* @apiName 更新角色
 * @apiParam {String} name 角色名称
 * @apiParam {String} code 角色编码（用于，鉴权需唯一）
 * @apiParam {Number} level 角色级别
@@ -295,8 +295,8 @@ router.post('/updateRole', async (req, res, next) => {
 })
 
 /**
-* @api {post} /sys/roleMenuAuth 角色菜单授权
-* @apiName menuAuthToRole
+* @api {post} /sys/roleMenuAuth 角色菜单授权，仅限操作低于自身角色等级的角色
+* @apiName 角色菜单授权
 * @apiParam {String} roleCode 角色编码
 * @apiParam {Array} menuIds 菜单ids
 * @apiGroup system
@@ -320,8 +320,8 @@ router.post('/roleMenuAuth', async (req, res, next) => {
 })
 
 /**
-* @api {get} /sys/getRoleMenu 获取指定角色的菜单
-* @apiName getRoleMenu
+* @api {get} /sys/getRoleMenu 获取指定角色的授权菜单
+* @apiName 获取角色菜单
 * @apiParam {String} roleCode 角色编码
 * @apiGroup system
 * @apiSuccess {Array} result 角色菜单
@@ -335,6 +335,32 @@ router.get('/getRoleMenu', async (req, res, next) => {
       code: 0,
       msg: '菜单授权成功',
       result: menuList.map(item => item.menu_id)
+    })
+  } catch (err) {
+    next(err);
+  }
+})
+
+/**
+* @api {get} /sys/getApiList 获取api列表
+* @apiName 获取api列表
+* @apiGroup system
+* @apiSuccess {Array} result api列表
+* @apiUse Common
+*/
+router.get('/getApiList', async (req, res, next) => {
+  try {
+    const apiList = await querySql(`
+      SELECT 
+      id, name, addr, method, 
+      \`desc\`, \`group\`, params, 
+      response, auth 
+      FROM sys_api
+    `);
+    res.send({
+      code: 0,
+      msg: '菜单授权成功',
+      result: apiList
     })
   } catch (err) {
     next(err);
