@@ -12,32 +12,39 @@ const { menuFields } = require('../sql/menu');
 * @api {post} /use/login 登录
 * @apiName 用户登录
 * @apiGroup user
-* @apiParam {String} userName 用户名
-* @apiParam {String} password 用户名
+* @apiParam {String} account 账号
+* @apiParam {String} password 密码
 * @apiSuccess {String} result token
 * @apiUse Common
 */
 router.post('/login', async (req, res, next) => {
   try {
-    const { userName, password } = req.body;
-    const queryRes = await querySql('SELECT * FROM sys_user WHERE user_name = ? AND password = ?', [userName, password]);
+    const { account, password } = req.body;
+    const queryRes = await querySql(
+      `SELECT account, name, phone, role, avatar 
+      FROM sys_user 
+      WHERE account = ? AND password = ?`, 
+      [account, password]
+    );
     if (queryRes.length > 0) {
-      const { user_name, avatar, role } = queryRes[0];
+      const { avatar, role, name } = queryRes[0];
       const token = jwt.sign(
         {
           role,
-          userName: user_name
+          name,
+          account
         },
         JWT_CONFIG.PRIVATE_KEY,
         { expiresIn: JWT_CONFIG.EXPIRESD }
       )
       res.send({
         code: 0,
-        msg: `欢迎回来，${userName}`,
+        msg: `欢迎回来，${name}`,
         result: token,
         userInfo: {
-          userName,
-          avatar
+          name,
+          avatar,
+          account
         }
       });
     } else {
