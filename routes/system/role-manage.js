@@ -12,6 +12,69 @@ const { handlePageSql } = require('../../lib/utils');
 * @apiUse Common
 * @apiUse Page
 */
+router.get('/getRoleListByPage', async (req, res, next) => {
+  try {
+    const sql = `
+        SELECT 
+        name, code, level,
+        is_default, remarks,
+        operater,
+        DATE_FORMAT(update_time, "%Y-%m-%d %H:%i:%s") as update_time, id
+        FROM sys_role
+      `;
+    const byPageSql = handlePageSql(req, sql);
+    const queryRes = await Promise.allSettled([
+      querySql(byPageSql),
+      querySql(`SELECT COUNT(*) as total FROM sys_role`)
+    ])
+    const roleList = queryRes[0]?.value;
+    const total = queryRes[1]?.value[0]?.total;
+    res.send({
+      code: 0,
+      msg: '获取成功',
+      result: (roleList || []),
+      total: total || 0
+    })
+  } catch (err) {
+    next(err);
+  }
+})
+
+/**
+* @api {get} /sys/getRoleList 获取角色列表，仅限获取低于自身角色等级角色
+* @apiName 获取角色列表
+* @apiGroup system
+* @apiSuccess {Array} result 角色列表
+* @apiUse Common
+*/
+router.get('/getRoleList', async (req, res, next) => {
+  try {
+    const roleList = await querySql(`
+      SELECT 
+      name, code, level,
+      is_default, remarks,
+      operater,
+      DATE_FORMAT(update_time, "%Y-%m-%d %H:%i:%s") as update_time, id
+      FROM sys_role
+    `);
+    res.send({
+      code: 0,
+      msg: '获取成功',
+      result: (roleList || []),
+    })
+  } catch (err) {
+    next(err);
+  }
+})
+
+/**
+* @api {get} /sys/getRoleList 获取角色列表，仅限获取低于自身角色等级角色
+* @apiName 获取角色列表
+* @apiGroup system
+* @apiSuccess {Array} result 角色列表
+* @apiUse Common
+* @apiUse Page
+*/
 router.get('/getRoleList', async (req, res, next) => {
   try {
     const sql = `
@@ -164,6 +227,27 @@ router.get('/getRoleMenu', async (req, res, next) => {
       code: 0,
       msg: '获取成功',
       result: menuList.map(item => item.menu_id)
+    })
+  } catch (err) {
+    next(err);
+  }
+})
+
+/**
+* @api {post} /sys/updateDefaultRole 设置默认角色，一般用不到，仅能设置比自身角色级别低的角色
+* @apiName 设置默认角色
+* @apiParam {String} roleCode 角色编码
+* @apiGroup system
+* @apiUse Common
+*/
+router.post('/updateDefaultRole', apiAuth, async (req, res, next) => {
+  try {
+    const { roleCode } = req.body;
+    await querySql(`UPDATE sys_role SET is_default = 0 WHERE is_default = 1`)
+    await querySql(`UPDATE sys_role SET is_default = 1 WHERE code = ?`, [roleCode]);
+    res.send({
+      code: 0,
+      msg: '设置默认角色成功'
     })
   } catch (err) {
     next(err);
