@@ -155,8 +155,8 @@ router.post('/deleteUser', async(req, res, next) => {
 */
 router.post('/disableUser', async(req, res, next) => {
   try {
-    const { userIds } = req.body;
-    await querySql(`UPDATE sys_user SET enabled = 0 WHERE id IN (${userIds.toString()})`);
+    const { userIds, enabled } = req.body;
+    await querySql(`UPDATE sys_user SET enabled = ? WHERE id IN (${userIds.toString()})`, [enabled ? 1 : 0]);
     res.send({
       code: 0,
       msg: '禁用用户成功'
